@@ -24,11 +24,18 @@ STOCKS = {
 STOCK_API_URL = "https://tw.stock.yahoo.com/q/q?s={}"  # 使用 Yahoo 股市 (可換成其他 API)
 
 def get_stock_price(stock_id):
-    """取得指定股票的即時價格"""
-    response = requests.get(STOCK_API_URL.format(stock_id))
+    """使用 Yahoo Finance 爬取真實的台股股價"""
+    url = f"https://tw.stock.yahoo.com/q/q?s={stock_id}"
+    response = requests.get(url)
+    
     if response.status_code == 200:
-        return f"{stock_id} 現價: (模擬數據) 100元"
-    return f"{stock_id} 查詢失敗"
+        soup = BeautifulSoup(response.text, "html.parser")
+        stock_table = soup.findAll("table")[1]  # 第二個表格是股價資訊
+        rows = stock_table.findAll("tr")[1]  # 第二列是數據
+        stock_price = rows.findAll("td")[2].text.strip()  # 抓取股價
+        return f"{stock_id} 現價: {stock_price} 元"
+    
+    return f"{stock_id} 查詢失敗，請稍後再試！"
 
 def send_stock_report():
     """每天 9:01 自動發送股票開盤價 & 當跌幅超過 0.5% 時通知"""
